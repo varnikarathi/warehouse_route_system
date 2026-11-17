@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}User Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Operator Profile</h1>
+    <p class="page-subtitle">Account credentials, operational role, and dispatch statistics.</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start;">
+  <!-- User ID Card -->
+  <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+    <div class="user-avatar" style="width: 72px; height: 72px; font-size: 1.75rem; margin: 0 auto 1rem; border: 2px solid var(--border-subtle);">
+      {{ current_name[0] | upper if current_name else 'U' }}
+    </div>
+    <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ current_name }}</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">@{{ current_user }}</div>
+
+    <div style="margin-bottom: 1.25rem;">
+      <span class="badge badge-accent" style="text-transform: capitalize; padding: 0.25rem 0.75rem; font-size: 0.75rem;">
+        <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+        {{ current_role }}
+      </span>
+    </div>
+
+    <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.5rem;">
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--text-muted);">Email:</span>
+        <span style="font-weight: 500;">{{ profile_user.email or current_user ~ '@routeflow.io' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--text-muted);">Status:</span>
+        <span style="color: var(--success); font-weight: 600;">Active</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--text-muted);">Member Since:</span>
+        <span>{{ profile_user.created_at[:10] if profile_user.created_at else '2026-01-10' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dispatcher Metrics & System Credentials -->
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i data-lucide="activity" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+          <span>Operational Contribution</span>
+        </div>
+      </div>
+      <div class="kpi-grid" style="margin-bottom: 0;">
+        <div class="kpi-card" style="background: var(--bg-subtle);">
+          <div class="kpi-label">Your Planned Routes</div>
+          <div class="kpi-value" style="font-size: 1.5rem; margin-top: 0.35rem;">{{ user_routes_count }}</div>
+        </div>
+        <div class="kpi-card" style="background: var(--bg-subtle);">
+          <div class="kpi-label">Your Dispatched Distance</div>
+          <div class="kpi-value" style="font-size: 1.5rem; margin-top: 0.35rem;">{{ user_total_km }} <span style="font-size: 0.85rem; color: var(--text-muted);">km</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i data-lucide="lock" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+          <span>Authentication & Security</span>
+        </div>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-secondary);">
+        <p style="margin-bottom: 0.75rem;">
+          Your account is secured with <strong>Scrypt</strong> cryptographic password hashing. Sessions are maintained via secure HTTP-only cookies with CSRF validation.
+        </p>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="/logout" class="btn btn-outline btn-sm" style="color: var(--danger);">
+            <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+            <span>Sign Out Session</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

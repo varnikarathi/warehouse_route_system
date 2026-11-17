@@ -1,0 +1,22 @@
+# Netlify Deployment Configuration for ROUTEFLOW
+
+[build]
+  publish = "static"
+  functions = "functions"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
+[functions]
+  included_files = [
+    "templates/**",
+    "data/**",
+    "*.py"
+  ]
+
+# Forward all requests to the serverless WSGI Flask function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/app"
+  status = 200
+  force = false

@@ -1,181 +1,336 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-    }
-    #map { height: 400px; width: 80%; margin: 30px auto; border: 2px solid #ccc; }
-    .container {
-      width: 80%;
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    a {
-      text-decoration: none;
-      color: #007BFF;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    li {
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f0f0f0;
-      border-radius: 6px;
-    }
-    .info-box {
-      background-color: #e9f7ef;
-      padding: 15px;
-      border-left: 6px solid #28a745;
-      margin-top: 20px;
-      border-radius: 6px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Welcome, {{ user }} ({{ role|capitalize }})</h2>
-    <a href="/logout">Logout</a>
-    {% if role == 'admin' %}
-      | <a href="/add-warehouse">➕ Add Warehouse</a>
-    {% endif %}
+{% extends "base.html" %}
 
-    <h3>📍 All Warehouses</h3>
-    {% if warehouses %}
-      <ul>
-        {% for w in warehouses %}
-          <li>
-            <strong>{{ w.name }}</strong> — {{ w.city }}<br>
-            📦 <a href="/warehouse/{{ loop.index0 }}">Manage Items</a><br>
-            📌 Location: ({{ w.location.lat }}, {{ w.location.lon }})
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>No warehouses added yet.</p>
-    {% endif %}
+{% block title %}Dashboard — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Welcome back, {{ current_name }}</h1>
+    <p class="page-subtitle">Here's an overview of your route planning activity and fleet logistics.</p>
   </div>
-
-  <div id="map"></div>
-
-  <div class="container">
-    <h3>📊 Items per Warehouse</h3>
-    <canvas id="itemChart" width="600" height="300"></canvas>
+  <div class="page-actions">
+    <a href="/planner" class="btn btn-primary">
+      <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+      <span>Plan New Route</span>
+    </a>
+    <a href="/saved-routes" class="btn btn-outline">
+      <i data-lucide="bookmark" style="width: 16px; height: 16px;"></i>
+      <span>Saved Routes</span>
+    </a>
   </div>
+</div>
 
-  {% if role == 'admin' and warehouses|length > 1 %}
-  <div class="container">
-    <h3>🚛 Optimize Route Between Warehouses</h3>
-    <form method="POST" action="/optimize-route">
-      <label for="source">Source:</label>
-      <select name="source" required>
-        {% for w in warehouses %}
-          <option value="{{ loop.index0 }}">{{ w.name }} ({{ w.city }})</option>
-        {% endfor %}
-      </select>
-
-      <label for="destination">Destination:</label>
-      <select name="destination" required>
-        {% for w in warehouses %}
-          <option value="{{ loop.index0 }}">{{ w.name }} ({{ w.city }})</option>
-        {% endfor %}
-      </select>
-
-      <button type="submit">Find Shortest Route</button>
-    </form>
-
-    {% if route %}
-      <div class="info-box">
-        <h4>🛣️ Optimized Route Info</h4>
-        <p><strong>From:</strong> {{ route.source }}</p>
-        <p><strong>To:</strong> {{ route.destination }}</p>
-        <p><strong>Distance:</strong> {{ route.distance_km }} km</p>
-        <p><strong>Estimated Duration:</strong> {{ route.duration_min }} minutes</p>
+<!-- KPI Summary Cards Grid -->
+<div class="kpi-grid">
+  <!-- KPI 1: Total Routes -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Total Routes Planned</span>
+      <div class="kpi-icon-badge">
+        <i data-lucide="route" style="width: 16px; height: 16px;"></i>
       </div>
+    </div>
+    <div class="kpi-value">{{ kpis.total_routes_planned }}</div>
+    <div class="kpi-subtext">
+      <span class="trend-badge positive">
+        <i data-lucide="arrow-up-right" style="width: 12px; height: 12px;"></i>
+        +14.2%
+      </span>
+      <span>vs last month</span>
+    </div>
+  </div>
+
+  <!-- KPI 2: Total Distance -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Total Distance Covered</span>
+      <div class="kpi-icon-badge">
+        <i data-lucide="navigation" style="width: 16px; height: 16px;"></i>
+      </div>
+    </div>
+    <div class="kpi-value">{{ kpis.total_distance_km }} <span style="font-size: 1rem; font-weight: 500; color: var(--text-muted);">km</span></div>
+    <div class="kpi-subtext">
+      <span>Avg {{ kpis.avg_distance_km }} km per journey</span>
+    </div>
+  </div>
+
+  <!-- KPI 3: Routes Optimized -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Routes Optimized</span>
+      <div class="kpi-icon-badge">
+        <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--accent);"></i>
+      </div>
+    </div>
+    <div class="kpi-value">{{ kpis.routes_optimized }}</div>
+    <div class="kpi-subtext">
+      <span class="badge badge-accent">{{ kpis.total_distance_saved_km }} km saved</span>
+    </div>
+  </div>
+
+  <!-- KPI 4: Time Saved -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Estimated Time Saved</span>
+      <div class="kpi-icon-badge">
+        <i data-lucide="timer" style="width: 16px; height: 16px; color: var(--success);"></i>
+      </div>
+    </div>
+    <div class="kpi-value" style="color: var(--success);">{{ kpis.total_time_saved_display }}</div>
+    <div class="kpi-subtext">
+      <span>Via dynamic waypoint ordering</span>
+    </div>
+  </div>
+</div>
+
+<!-- Route Optimization Notice if calculated from legacy form -->
+{% if route %}
+<div class="card" style="margin-bottom: 1.5rem; border-color: var(--accent-border); background-color: var(--accent-light);">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <i data-lucide="check-circle" style="width: 20px; height: 20px; color: var(--accent);"></i>
+      <div>
+        <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">
+          Route Calculated: {{ route.source }} → {{ route.destination }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+          Distance: <strong>{{ route.distance_km }} km</strong> &bull; Estimated Driving Duration: <strong>{{ route.duration_min }} mins</strong>
+        </div>
+      </div>
+    </div>
+    <a href="/planner" class="btn btn-primary btn-sm">Inspect in Planner</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Charts Section: Activity Trends & Distance Analytics -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+  <!-- Chart 1: Activity Trends -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i data-lucide="trending-up" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+        <span>Route Activity Trends</span>
+      </div>
+      <span class="badge badge-muted">Monthly Volume</span>
+    </div>
+    <div style="height: 240px; position: relative;">
+      <canvas id="activityChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 2: Distance Savings Breakdown -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i data-lucide="pie-chart" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+        <span>Optimization Ratio</span>
+      </div>
+    </div>
+    <div style="height: 180px; position: relative; margin-top: 10px;">
+      <canvas id="optimizationRatioChart"></canvas>
+    </div>
+    <div style="display: flex; justify-content: space-around; margin-top: 15px; font-size: 0.775rem; color: var(--text-muted);">
+      <div><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#4f46e5; margin-right:4px;"></span>Optimized</div>
+      <div><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#cbd5e1; margin-right:4px;"></span>Standard</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two Columns: Recent Routes & Frequently Used Locations -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+  <!-- Recent Routes Table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i data-lucide="history" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+        <span>Recent Routes</span>
+      </div>
+      <a href="/history" style="font-size: 0.8rem; font-weight: 500; color: var(--accent);">View all &rarr;</a>
+    </div>
+
+    <div class="table-container" style="border: none;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Route Corridor</th>
+            <th>Distance</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in kpis.recent_routes %}
+          <tr>
+            <td>
+              <div style="font-weight: 600; color: var(--text-main);">{{ r.route_name }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">{{ r.source }} &rarr; {{ r.destination }}</div>
+            </td>
+            <td>{{ r.distance_km }} km</td>
+            <td>{{ r.duration_min }} m</td>
+            <td>
+              {% if r.optimized %}
+                <span class="badge badge-success">Optimized</span>
+              {% else %}
+                <span class="badge badge-muted">Standard</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              <a href="/planner" class="btn btn-outline btn-sm">Planner</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No routes planned yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Frequently Used Locations & Quick Hub Route -->
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    <!-- Frequent Locations -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i data-lucide="map-pin" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+          <span>Frequently Used Locations</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+        {% for loc in kpis.frequent_locations %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.6rem; border-radius: 6px; background-color: var(--bg-subtle);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="building-2" style="width: 15px; height: 15px; color: var(--text-muted);"></i>
+            <span style="font-size: 0.825rem; font-weight: 500;">{{ loc.name }}</span>
+          </div>
+          <span class="badge badge-muted" style="font-size: 0.7rem;">{{ loc.count }} trips</span>
+        </div>
+        {% else %}
+        <p style="font-size: 0.8rem; color: var(--text-muted);">No frequent locations yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Quick Hub Route (Preserving original warehouse optimization feature) -->
+    {% if warehouses|length > 1 %}
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i data-lucide="send" style="width: 16px; height: 16px; color: var(--text-secondary);"></i>
+          <span>Direct Hub Route</span>
+        </div>
+      </div>
+      <form method="POST" action="/optimize-route">
+        <div class="form-group">
+          <label class="form-label">Source Hub</label>
+          <select name="source" class="form-control" required>
+            {% for w in warehouses %}
+              <option value="{{ loop.index0 }}">{{ w.name }} ({{ w.city }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Destination Hub</label>
+          <select name="destination" class="form-control" required>
+            {% for w in warehouses %}
+              <option value="{{ loop.index0 }}" {% if loop.index0 == 1 %}selected{% endif %}>{{ w.name }} ({{ w.city }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-outline" style="width: 100%;">
+          <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+          <span>Calculate Hub Distance</span>
+        </button>
+      </form>
+    </div>
     {% endif %}
   </div>
-  {% endif %}
+</div>
+{% endblock %}
 
-  <!-- Leaflet Map Script -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    var map = L.map('map').setView([26.8467, 80.9462], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    {% for w in warehouses %}
-      var marker = L.marker([{{ w.location.lat }}, {{ w.location.lon }}]).addTo(map);
-      marker.bindPopup(
-        "<b>{{ w.name | escape }}</b><br>{{ w.city | escape }}<br>" +
-        "<a href='/warehouse/{{ loop.index0 }}'>Manage Items</a>"
-      );
-    {% endfor %}
-
-    {% if route %}
-      const source = [{{ route.source_lat }}, {{ route.source_lon }}];
-      const destination = [{{ route.destination_lat }}, {{ route.destination_lon }}];
-
-      fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
-        method: "POST",
-        headers: {
-          "Authorization": "{{ ors_api_key }}",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          coordinates: [
-            [source[1], source[0]],
-            [destination[1], destination[0]]
-          ]
-        })
-      })
-      .then(response => {
-        if (!response.ok) throw new Error("Route fetch failed");
-        return response.json();
-      })
-      .then(data => {
-        const routeLayer = L.geoJSON(data, {
-          style: { color: 'red', weight: 4 }
-        }).addTo(map);
-        map.fitBounds(routeLayer.getBounds());
-      })
-      .catch(err => {
-        console.error("Route fetch error:", err);
-      });
-    {% endif %}
-  </script>
-
-  <!-- Chart.js Script -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const ctx = document.getElementById('itemChart').getContext('2d');
-    const itemChart = new Chart(ctx, {
-      type: 'bar',
+{% block extra_scripts %}
+<script>
+  // Chart 1: Activity Trends
+  const activityCtx = document.getElementById('activityChart');
+  if (activityCtx) {
+    new Chart(activityCtx, {
+      type: 'line',
       data: {
-        labels: {{ chart_labels | tojson }},
+        labels: {{ kpis.chart_labels | tojson }},
         datasets: [{
-          label: 'Number of Items',
-          data: {{ chart_data | tojson }},
-          backgroundColor: 'rgba(54, 162, 235, 0.7)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
+          label: 'Routes Planned',
+          data: {{ kpis.chart_data | tojson }},
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79, 70, 229, 0.05)',
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#4f46e5',
+          pointBorderWidth: 2
         }]
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            titleFont: { family: 'Inter', size: 12 },
+            bodyFont: { family: 'Inter', size: 12 },
+            padding: 10,
+            cornerRadius: 6
+          }
+        },
         scales: {
-          y: { beginAtZero: true }
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 11 }, color: '#64748b' }
+          },
+          y: {
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { family: 'Inter', size: 11 }, color: '#64748b', stepSize: 10 }
+          }
         }
       }
     });
-  </script>
-</body>
-</html>
+  }
+
+  // Chart 2: Optimization Ratio
+  const ratioCtx = document.getElementById('optimizationRatioChart');
+  if (ratioCtx) {
+    const optCount = {{ kpis.routes_optimized }};
+    const totalCount = {{ kpis.total_routes_planned }};
+    const standardCount = Math.max(0, totalCount - optCount);
+
+    new Chart(ratioCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Optimized', 'Standard'],
+        datasets: [{
+          data: [optCount, standardCount || 1],
+          backgroundColor: ['#4f46e5', '#e2e8f0'],
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '75%',
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

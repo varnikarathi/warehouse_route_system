@@ -1,24 +1,59 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Add Warehouse</title>
-</head>
-<body>
-  <h2>Add Warehouse</h2>
-  <form method="POST">
-    <label>Warehouse Name:</label><br>
-    <input name="name" required><br><br>
+{% extends "base.html" %}
 
-    <label>City:</label><br>
-    <input name="city" required><br><br>
+{% block title %}Add Logistics Hub — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}Add Logistics Hub{% endblock %}
 
-    <label>Latitude:</label><br>
-    <input name="lat" step="any" required><br><br>
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Register Logistics Hub</h1>
+    <p class="page-subtitle">Add a distribution center, warehouse, or transit node to your fleet map.</p>
+  </div>
+  <div class="page-actions">
+    <a href="/dashboard" class="btn btn-outline">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+      <span>Back to Dashboard</span>
+    </a>
+  </div>
+</div>
 
-    <label>Longitude:</label><br>
-    <input name="lon" step="any" required><br><br>
+<div style="max-width: 600px;">
+  <form method="POST" action="/add-warehouse" class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i data-lucide="building" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+        <span>Hub Details & Coordinates</span>
+      </div>
+    </div>
 
-    <button type="submit">Add Warehouse</button>
+    <div class="form-group">
+      <label class="form-label">Hub / Facility Name</label>
+      <input type="text" name="name" class="form-control" placeholder="e.g. South Freight Terminal" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">City / Region</label>
+      <input type="text" name="city" class="form-control" placeholder="e.g. Gaya" required>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label">Latitude</label>
+        <input type="number" step="any" name="lat" class="form-control" placeholder="e.g. 25.5941" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Longitude</label>
+        <input type="number" step="any" name="lon" class="form-control" placeholder="e.g. 85.1376" required>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+      <a href="/dashboard" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+        <span>Register Hub</span>
+      </button>
+    </div>
   </form>
-</body>
-</html>
+</div>
+{% endblock %}

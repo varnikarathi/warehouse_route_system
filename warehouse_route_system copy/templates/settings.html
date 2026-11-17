@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}Preferences & Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Platform Preferences</h1>
+    <p class="page-subtitle">Configure routing engine parameters, units, and map tile settings.</p>
+  </div>
+</div>
+
+<div style="max-width: 680px;">
+  <form method="POST" action="/settings" class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i data-lucide="sliders" style="width: 17px; height: 17px; color: var(--text-secondary);"></i>
+        <span>Routing Engine Parameters</span>
+      </div>
+    </div>
+
+    <!-- Unit Preference -->
+    <div class="form-group">
+      <label class="form-label">Distance & Velocity Measurement Unit</label>
+      <select name="unit" class="form-control">
+        <option value="km" {% if settings.unit == 'km' %}selected{% endif %}>Metric (Kilometers / km/h)</option>
+        <option value="mi" {% if settings.unit == 'mi' %}selected{% endif %}>Imperial (Miles / mph)</option>
+      </select>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Applies to route calculations, KPI metrics, and export reports.
+      </div>
+    </div>
+
+    <!-- Map Theme -->
+    <div class="form-group">
+      <label class="form-label">Interactive Map Basemap Layer</label>
+      <select name="map_theme" class="form-control">
+        <option value="positron" {% if settings.map_theme == 'positron' %}selected{% endif %}>CartoDB Positron (Clean Minimal SaaS Light)</option>
+        <option value="osm" {% if settings.map_theme == 'osm' %}selected{% endif %}>Standard OpenStreetMap Layer</option>
+      </select>
+    </div>
+
+    <!-- OpenRouteService API Key -->
+    <div class="form-group">
+      <label class="form-label">Custom OpenRouteService API Token</label>
+      <input type="password" name="ors_api_key" class="form-control" placeholder="Enter ORS token or leave blank for default system key" value="{{ settings.ors_api_key }}">
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Your key remains strictly server-side and is never exposed in client scripts.
+      </div>
+    </div>
+
+    <!-- Checkbox: Auto-Optimize -->
+    <div class="form-group" style="margin-top: 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+      <input type="checkbox" name="auto_optimize" id="auto_optimize" {% if settings.auto_optimize %}checked{% endif %} style="margin-top: 0.25rem;">
+      <div>
+        <label for="auto_optimize" style="font-weight: 600; font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+          Enable Automatic TSP Stop Optimization
+        </label>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">
+          When checked, intermediate waypoints are automatically reordered for shortest total travel distance.
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+      <a href="/dashboard" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="save" style="width: 15px; height: 15px;"></i>
+        <span>Save Changes</span>
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

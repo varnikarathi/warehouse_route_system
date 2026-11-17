@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — ROUTEFLOW</title>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body style="background-color: var(--bg-app);">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-icon-box">
+          <i data-lucide="route" style="width: 20px; height: 20px;"></i>
+        </div>
+        <h1 class="auth-title">Sign in to ROUTEFLOW</h1>
+        <p class="auth-subtitle">Intelligent route optimization and logistics dispatch platform.</p>
+      </div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash-message {{ category }}" style="margin-bottom: 1rem;">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control" placeholder="admin or dispatcher" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <label class="form-label" style="margin-bottom: 0;">Password</label>
+          </div>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.65rem;">
+          <span>Sign In</span>
+          <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+        Don't have an operator account?
+        <a href="/register" style="color: var(--accent); font-weight: 600;">Register here</a>
+      </div>
+
+      <!-- Quick Demo Credentials Hint -->
+      <div style="margin-top: 1.5rem; padding: 0.75rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.75rem; color: var(--text-muted);">
+        <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Default Operator Access:</div>
+        <div>Username: <strong style="color: var(--text-main);">admin</strong> &bull; Password: <strong style="color: var(--text-main);">admin123</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

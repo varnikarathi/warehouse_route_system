@@ -1,23 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Edit Item</title>
-</head>
-<body>
-  <h2>Edit Item</h2>
-  <a href="/warehouse/{{ wid }}">← Back to Items</a><br><br>
+{% extends "base.html" %}
 
-  <form method="POST">
-    <label>Image URL (optional):</label><br>
-<input name="image_url" type="url" value="{{ item.image }}"><br><br>
+{% block title %}Edit Cargo Item — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}Edit Cargo Item{% endblock %}
 
-    <label>Item Name:</label><br>
-    <input name="item" value="{{ item.name }}" required><br><br>
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Edit Cargo: {{ item.name }}</h1>
+    <p class="page-subtitle">Update item name, allocated quantity, or image assets.</p>
+  </div>
+  <div class="page-actions">
+    <a href="/warehouse/{{ wid }}" class="btn btn-outline">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+      <span>Back to Roster</span>
+    </a>
+  </div>
+</div>
 
-    <label>Quantity:</label><br>
-    <input name="quantity" type="number" min="1" value="{{ item.quantity }}" required><br><br>
+<div style="max-width: 550px;">
+  <form method="POST" enctype="multipart/form-data" class="card">
+    <div class="form-group">
+      <label class="form-label">Item / Cargo Name</label>
+      <input type="text" name="item" class="form-control" value="{{ item.name }}" required>
+    </div>
 
-    <button type="submit">Update</button>
+    <div class="form-group">
+      <label class="form-label">Stock Quantity</label>
+      <input type="number" name="quantity" class="form-control" min="1" value="{{ item.quantity }}" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Image File (upload new image to replace)</label>
+      <input type="file" name="image_file" class="form-control" accept="image/*">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Or Image URL</label>
+      <input type="url" name="image_url" class="form-control" value="{{ item.image or '' }}">
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+      <a href="/warehouse/{{ wid }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="save" style="width: 15px; height: 15px;"></i>
+        <span>Save Changes</span>
+      </button>
+    </div>
   </form>
-</body>
-</html>
+</div>
+{% endblock %}

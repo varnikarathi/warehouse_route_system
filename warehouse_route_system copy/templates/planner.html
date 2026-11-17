@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Route Planner — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}Route Planner{% endblock %}
+
+{% block content %}
+<div class="planner-workspace">
+  <!-- Left Panel: Route Configuration -->
+  <div class="planner-sidebar-panel">
+    <!-- Panel Header -->
+    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Route Configuration</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">Set waypoints, reorder stops, and optimize</div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" id="clearRouteBtn" title="Reset all waypoints">
+        <i data-lucide="rotate-ccw" style="width: 13px; height: 13px;"></i>
+        <span>Reset</span>
+      </button>
+    </div>
+
+    <!-- Scrollable Waypoint List -->
+    <div class="planner-panel-scroll">
+      <!-- Quick Location Preset Dropdown -->
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label">
+          <i data-lucide="bookmark" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i>
+          Quick Load Logistics Hub
+        </label>
+        <select id="hubPresetSelect" class="form-control">
+          <option value="">-- Choose a hub to add as waypoint --</option>
+          {% for w in warehouses %}
+            <option value="{{ w.location.lon }},{{ w.location.lat }}" data-name="{{ w.name }} ({{ w.city }})">
+              {{ w.name }} — {{ w.city }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; letter-spacing: 0.05em;">
+        Waypoints Sequence
+      </div>
+
+      <!-- Start Location Card -->
+      <div class="stop-item-card" id="startStopCard">
+        <div class="stop-marker-badge stop-start">A</div>
+        <div style="flex: 1;">
+          <input type="text" class="stop-input-field" id="startLocationName" placeholder="Starting Location..." value="Patna Central Hub">
+          <input type="hidden" id="startCoords" value="85.1376,25.5941">
+        </div>
+        <span class="badge badge-muted" style="font-size: 0.65rem;">Origin</span>
+      </div>
+
+      <!-- Intermediate Stops Container -->
+      <div id="intermediateStopsContainer">
+        <!-- Dynamically injected stops -->
+      </div>
+
+      <!-- Add Intermediate Stop Button -->
+      <button type="button" class="btn btn-outline btn-sm" id="addStopBtn" style="width: 100%; border-style: dashed; margin-bottom: 0.5rem;">
+        <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+        <span>Add Intermediate Stop</span>
+      </button>
+
+      <!-- Destination Card -->
+      <div class="stop-item-card" id="destStopCard">
+        <div class="stop-marker-badge stop-dest">B</div>
+        <div style="flex: 1;">
+          <input type="text" class="stop-input-field" id="destLocationName" placeholder="Destination Location..." value="Arrah Logistics Depot">
+          <input type="hidden" id="destCoords" value="84.6665,25.5541">
+        </div>
+        <span class="badge badge-muted" style="font-size: 0.65rem;">Destination</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
+        <button type="button" class="btn btn-primary" id="optimizeBtn" style="flex: 1;">
+          <i data-lucide="sparkles" style="width: 15px; height: 15px; color: #a5b4fc;"></i>
+          <span>Optimize Route</span>
+        </button>
+        <button type="button" class="btn btn-outline" id="calculateSeqBtn" title="Calculate without reordering">
+          <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+        </button>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="plannerLoading" style="display: none; text-align: center; padding: 1.5rem 0;">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.825rem; color: var(--text-muted);">
+          <i data-lucide="loader-2" class="spin" style="width: 16px; height: 16px; animation: spin 1s linear infinite;"></i>
+          <span>Calculating optimal path with OpenRouteService...</span>
+        </div>
+      </div>
+
+      <!-- Optimization Results Panel -->
+      <div id="resultsPanel" style="display: none;">
+        <div class="optimization-result-box">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-weight: 700; font-size: 0.875rem; color: var(--text-main);">Optimization Summary</div>
+            <span id="optimizationBadge" class="badge badge-success">Optimized</span>
+          </div>
+
+          <div class="result-metrics-grid">
+            <div class="result-metric-item">
+              <div class="metric-item-label">Total Distance</div>
+              <div class="metric-item-value" id="resultDistance">0.0 km</div>
+            </div>
+            <div class="result-metric-item">
+              <div class="metric-item-label">Estimated Time</div>
+              <div class="metric-item-value" id="resultDuration">0 mins</div>
+            </div>
+          </div>
+
+          <!-- Savings banner if optimized -->
+          <div id="savingsBanner" class="savings-banner" style="display: none;">
+            <i data-lucide="zap" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+            <div>
+              Saved <strong id="savedDistanceKm">0 km</strong> (<span id="savedTimeMin">0 mins</span>) vs original sequence
+            </div>
+          </div>
+
+          <!-- Waypoint Sequence Order -->
+          <div style="margin-top: 1rem;">
+            <div style="font-size: 0.725rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">
+              Stop Sequence
+            </div>
+            <ol id="sequenceList" style="padding-left: 1.25rem; font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.25rem;">
+            </ol>
+          </div>
+
+          <!-- Turn Instructions Accordion -->
+          <details style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--text-secondary);">
+              Directions & Turn Guidance (<span id="stepCount">0</span> steps)
+            </summary>
+            <div id="directionsList" style="max-height: 180px; overflow-y: auto; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem;">
+            </div>
+          </details>
+
+          <!-- Save Route Button -->
+          <button type="button" class="btn btn-accent" id="openSaveModalBtn" style="width: 100%; margin-top: 1.25rem;">
+            <i data-lucide="bookmark-plus" style="width: 15px; height: 15px;"></i>
+            <span>Save Route to Fleet Library</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Interactive Map -->
+  <div class="planner-map-panel">
+    <div id="planner-map"></div>
+
+    <!-- Map Floating Controls & Legend -->
+    <div style="position: absolute; top: 12px; right: 12px; z-index: 1000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm); font-size: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem;">
+      <div style="font-weight: 600; color: var(--text-main);">Interactive Map Legend</div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span>
+        <span>A: Starting Point</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #6366f1;"></span>
+        <span>Waypoints / Stops</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span>
+        <span>B: Final Destination</span>
+      </div>
+      <div style="border-top: 1px solid var(--border-subtle); margin-top: 0.2rem; padding-top: 0.2rem; color: var(--text-muted); font-size: 0.7rem;">
+        Click anywhere on map to add stop
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Save Route Dialog -->
+<div class="modal-overlay" id="saveRouteModal">
+  <div class="modal-content" style="padding: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+      <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">Save Route</div>
+      <button type="button" class="icon-btn" id="closeSaveModalBtn">
+        <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+      </button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Route Title</label>
+      <input type="text" class="form-control" id="saveRouteTitle" placeholder="e.g. North Corridor Daily Dispatch">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tags (comma separated)</label>
+      <input type="text" class="form-control" id="saveRouteTags" placeholder="Daily, Express, Highway">
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+      <button type="button" class="btn btn-outline" id="cancelSaveBtn">Cancel</button>
+      <button type="button" class="btn btn-primary" id="confirmSaveRouteBtn">
+        <i data-lucide="check" style="width: 15px; height: 15px;"></i>
+        <span>Save Route</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Pass server data to JavaScript
+  window.ROUTEFLOW_DATA = {
+    warehouses: {{ warehouses | tojson }},
+    preloadedRoute: {{ preloaded_route | tojson if preloaded_route else 'null' }}
+  };
+</script>
+<script src="{{ url_for('static', filename='js/planner.js') }}"></script>
+{% endblock %}

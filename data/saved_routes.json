@@ -1,0 +1,131 @@
+[
+  {
+    "id": "rt_27e0ce88",
+    "name": "Test Expressway Corridor",
+    "source": "Patna Central Hub",
+    "destination": "Gaya Gateway Facility",
+    "source_coords": null,
+    "dest_coords": null,
+    "stops": [],
+    "distance_km": 113.8,
+    "duration_min": 131.3,
+    "optimized": true,
+    "distance_saved_km": 0,
+    "time_saved_min": 0,
+    "created_at": "2026-11-17T15:34:05.476204",
+    "created_by": "admin",
+    "tags": [
+      "Planned"
+    ]
+  },
+  {
+    "id": "rt_pat_arh_01",
+    "name": "Patna to Arrah Express Corridor",
+    "source": "Patna Central Hub",
+    "destination": "Arrah Logistics Depot",
+    "source_coords": [
+      85.1376,
+      25.5941
+    ],
+    "dest_coords": [
+      84.6665,
+      25.5541
+    ],
+    "stops": [
+      {
+        "name": "Danapur Transit Point",
+        "coords": [
+          85.0425,
+          25.6262
+        ]
+      }
+    ],
+    "distance_km": 54.8,
+    "duration_min": 78,
+    "optimized": true,
+    "distance_saved_km": 8.4,
+    "time_saved_min": 14,
+    "created_at": "2026-11-14T11:20:00",
+    "created_by": "admin",
+    "tags": [
+      "Daily",
+      "Express",
+      "Corridor"
+    ]
+  },
+  {
+    "id": "rt_pat_muz_02",
+    "name": "North Bihar Logistics Ring",
+    "source": "Patna Central Hub",
+    "destination": "Muzaffarpur Express Hub",
+    "source_coords": [
+      85.1376,
+      25.5941
+    ],
+    "dest_coords": [
+      85.3647,
+      26.1209
+    ],
+    "stops": [
+      {
+        "name": "Hajipur Cargo Depot",
+        "coords": [
+          85.209,
+          25.6858
+        ]
+      },
+      {
+        "name": "Lalganj Delivery Point",
+        "coords": [
+          85.1802,
+          25.8672
+        ]
+      }
+    ],
+    "distance_km": 82.3,
+    "duration_min": 110,
+    "optimized": true,
+    "distance_saved_km": 12.6,
+    "time_saved_min": 22,
+    "created_at": "2026-11-15T14:45:00",
+    "created_by": "admin",
+    "tags": [
+      "North Ring",
+      "Multi-stop"
+    ]
+  },
+  {
+    "id": "rt_pat_gay_03",
+    "name": "South Highway Supply Line",
+    "source": "Patna Central Hub",
+    "destination": "Gaya Gateway Facility",
+    "source_coords": [
+      85.1376,
+      25.5941
+    ],
+    "dest_coords": [
+      85.0002,
+      24.7914
+    ],
+    "stops": [
+      {
+        "name": "Jehanabad Waypoint",
+        "coords": [
+          84.9856,
+          25.2152
+        ]
+      }
+    ],
+    "distance_km": 103.5,
+    "duration_min": 135,
+    "optimized": true,
+    "distance_saved_km": 15.2,
+    "time_saved_min": 25,
+    "created_at": "2026-11-16T09:15:00",
+    "created_by": "dispatcher",
+    "tags": [
+      "South Highway",
+      "Standard"
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "unit": "km",
+  "map_theme": "positron",
+  "default_lat": 25.5941,
+  "default_lon": 85.1376,
+  "default_zoom": 8,
+  "ors_api_key": "",
+  "auto_optimize": true,
+  "traffic_avoidance": false
+}

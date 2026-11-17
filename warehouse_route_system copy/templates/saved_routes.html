@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Routes — ROUTEFLOW{% endblock %}
+{% block page_breadcrumb %}Saved Routes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Saved Routes Library</h1>
+    <p class="page-subtitle">Access, dispatch, and reopen pre-configured fleet routes.</p>
+  </div>
+  <div class="page-actions">
+    <a href="/planner" class="btn btn-primary">
+      <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+      <span>Plan New Route</span>
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card" style="margin-bottom: 1.25rem; padding: 0.85rem 1.25rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 260px;">
+      <i data-lucide="search" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+      <input type="text" id="routeSearchInput" placeholder="Filter by route name, origin, or destination..." class="form-control" style="border: none; box-shadow: none; padding: 0.25rem;">
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <button type="button" class="btn btn-outline btn-sm filter-pill active" data-filter="all">All ({{ routes|length }})</button>
+      <button type="button" class="btn btn-outline btn-sm filter-pill" data-filter="optimized">Optimized Only</button>
+    </div>
+  </div>
+</div>
+
+<!-- Saved Routes Table / Cards -->
+<div class="table-container">
+  <table class="data-table" id="savedRoutesTable">
+    <thead>
+      <tr>
+        <th>Route Identifier & Title</th>
+        <th>Origin</th>
+        <th>Destination</th>
+        <th>Stops</th>
+        <th>Distance</th>
+        <th>Est. Duration</th>
+        <th>Created</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in routes %}
+      <tr class="route-row" data-name="{{ r.name | lower }}" data-source="{{ r.source | lower }}" data-destination="{{ r.destination | lower }}" data-optimized="{{ 'true' if r.optimized else 'false' }}">
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i data-lucide="map" style="width: 14px; height: 14px;"></i>
+            </div>
+            <div>
+              <div style="font-weight: 600; color: var(--text-main);">{{ r.name }}</div>
+              <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);">{{ r.id }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span style="font-weight: 500;">{{ r.source }}</span>
+        </td>
+        <td>
+          <span style="font-weight: 500;">{{ r.destination }}</span>
+        </td>
+        <td>
+          <span class="badge badge-muted">{{ r.stops|length }} intermediate</span>
+        </td>
+        <td>
+          <strong>{{ r.distance_km }}</strong> km
+          {% if r.distance_saved_km and r.distance_saved_km > 0 %}
+            <div style="font-size: 0.7rem; color: var(--success);">-{{ r.distance_saved_km }} km saved</div>
+          {% endif %}
+        </td>
+        <td>{{ r.duration_min }} mins</td>
+        <td style="font-size: 0.75rem; color: var(--text-muted);">
+          {{ r.created_at[:10] }}
+        </td>
+        <td style="text-align: right;">
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.35rem;">
+            <a href="/planner?route_id={{ r.id }}" class="btn btn-outline btn-sm" title="Reopen in interactive map">
+              <i data-lucide="external-link" style="width: 13px; height: 13px;"></i>
+              <span>Reopen</span>
+            </a>
+            <form method="POST" action="/saved-routes/delete/{{ r.id }}" style="display: inline;" onsubmit="return confirm('Remove this route from saved library?');">
+              <button type="submit" class="btn btn-outline btn-sm" style="color: var(--danger); padding: 0.35rem 0.5rem;" title="Delete">
+                <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+          <div style="max-width: 300px; margin: 0 auto;">
+            <i data-lucide="bookmark" style="width: 32px; height: 32px; color: var(--border-strong); margin-bottom: 0.5rem;"></i>
+            <div style="font-weight: 600; color: var(--text-main);">No saved routes found</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Configure routes in the Route Planner and save them for instant dispatch.</div>
+            <a href="/planner" class="btn btn-primary btn-sm">Go to Route Planner</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Filter & Search Logic
+  const searchInput = document.getElementById('routeSearchInput');
+  const rows = document.querySelectorAll('.route-row');
+  const filterPills = document.querySelectorAll('.filter-pill');
+  let currentFilter = 'all';
+
+  function applyFilter() {
+    const query = searchInput.value.toLowerCase().trim();
+    rows.forEach(row => {
+      const name = row.dataset.name || '';
+      const src = row.dataset.source || '';
+      const dst = row.dataset.destination || '';
+      const isOpt = row.dataset.optimized === 'true';
+
+      const matchesSearch = name.includes(query) || src.includes(query) || dst.includes(query);
+      const matchesFilter = currentFilter === 'all' || (currentFilter === 'optimized' && isOpt);
+
+      if (matchesSearch && matchesFilter) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', applyFilter);
+  }
+
+  filterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      filterPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentFilter = pill.dataset.filter;
+      applyFilter();
+    });
+  });
+</script>
+{% endblock %}

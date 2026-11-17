@@ -4,7 +4,6 @@
 [![Framework](https://img.shields.io/badge/Framework-Flask%203.1-black.svg)](https://palletsprojects.com/p/flask/)
 [![UI Style](https://img.shields.io/badge/Design-Linear%20%2F%20Stripe%20%2F%20Vercel-indigo.svg)](#design-system--philosophy)
 [![Maps](https://img.shields.io/badge/Mapping-Leaflet%20%2B%20CartoDB%20Positron-emerald.svg)](https://leafletjs.com/)
-[![Deployment](https://img.shields.io/badge/Deploy-Netlify%20Serverless%20WSGI-00ad9f.svg)](#deployment-guide-netlify)
 
 **ROUTEFLOW** is a modern, minimal, premium Route Optimization and Logistics Planning SaaS platform. Designed for fleet dispatchers, logistics coordinators, and freight operators, ROUTEFLOW combines intelligent multi-stop route sequencing with an interactive mapping workspace, real-time KPI metrics, and complete audit logging.
 
@@ -21,9 +20,7 @@ Inspired by the refined aesthetics of **Linear**, **Stripe Dashboard**, and **Ve
 5. [Getting Started (Local Development)](#getting-started-local-development)
 6. [Application Walkthrough](#application-walkthrough)
 7. [REST API Reference](#rest-api-reference)
-8. [Deployment Guide: Netlify](#deployment-guide-netlify)
-9. [Alternative Deployments (Render / Railway / Docker)](#alternative-deployments-render--railway--docker)
-10. [Configuration & Environment Variables](#configuration--environment-variables)
+8. [Configuration & Environment Variables](#configuration--environment-variables)
 
 ---
 
@@ -109,12 +106,7 @@ warehouse_route_system/
 ├── ors_service.py          # OpenRouteService API integration & TSP algorithm
 ├── storage.py              # Centralized JSON storage & serverless /tmp adapter
 ├── warehouse_manager.py    # Logistics hub & facility inventory management
-├── netlify.toml            # Netlify deployment build & routing configuration
-├── Procfile                # Gunicorn process file for container hosts
 ├── requirements.txt        # Production Python dependencies
-│
-├── functions/              # Netlify Serverless Functions
-│   └── app.py              # WSGI serverless adapter for Netlify / AWS Lambda
 │
 ├── data/                   # Persistent JSON Storage Layer
 │   ├── users.json          # User credentials & roles
@@ -125,7 +117,7 @@ warehouse_route_system/
 │
 ├── static/
 │   ├── css/
-│   │   └── main.css        # Premium SaaS Design System (Linear / Vercel style)
+│   │   └── main.css        # Premium SaaS Design System (Linear / Stripe style)
 │   └── js/
 │       ├── main.js         # Sidebar toggle, Ctrl+K search, dropdowns
 │       └── planner.js      # Split-screen Leaflet interactive route workspace
@@ -159,8 +151,7 @@ warehouse_route_system/
 | **Interactive Maps** | Leaflet.js 1.9, CartoDB Positron basemap tiles |
 | **Data Visualizations** | Chart.js 4.4 |
 | **Iconography** | Lucide Outline Icons |
-| **Storage** | Atomic JSON persistence with serverless `/tmp` portability |
-| **Serverless Adapter** | Netlify Python Functions / AWS Lambda WSGI |
+| **Storage** | Atomic JSON persistence |
 
 ---
 
@@ -303,74 +294,6 @@ All API endpoints require an authenticated session.
 
 ---
 
-## Deployment Guide: Netlify
-
-ROUTEFLOW is pre-configured for Netlify deployment via **Netlify Serverless Python Functions** using the included `netlify.toml` and `functions/app.py` WSGI handler.
-
-### Option A: Deploy via GitHub (Recommended)
-
-1. **Push your repository to GitHub**:
-   ```bash
-   git add .
-   git commit -m "Transform project into ROUTEFLOW SaaS with Netlify configuration"
-   git push origin main
-   ```
-2. **Log into Netlify** ([netlify.com](https://www.netlify.com/)).
-3. Click **"Add new site"** &rarr; **"Import an existing project"**.
-4. Select **GitHub** and choose your `warehouse_route_system` repository.
-5. Netlify will automatically detect `netlify.toml`:
-   - **Base directory**: Leave blank (root)
-   - **Publish directory**: `static`
-   - **Functions directory**: `functions`
-6. Under **Site configuration &rarr; Environment variables**, add:
-   - `SECRET_KEY`: A secure random secret string
-   - `ORS_API_KEY`: Your OpenRouteService API key
-   - `PYTHON_VERSION`: `3.11`
-7. Click **"Deploy site"**. Netlify will provision the serverless function and route all traffic to RouteFlow!
-
-### Option B: Deploy via Netlify CLI
-
-1. Install Netlify CLI:
-   ```bash
-   npm install -g netlify-cli
-   ```
-2. Authenticate:
-   ```bash
-   netlify login
-   ```
-3. Initialize and deploy:
-   ```bash
-   netlify init
-   netlify deploy --prod
-   ```
-
-### Important Note on Serverless Data Persistence
-Netlify Functions operate on an AWS Lambda read-only filesystem with a temporary `/tmp` partition.
-- ROUTEFLOW’s `storage.py` includes automatic serverless detection: when running on Netlify/Lambda, it writes to `/tmp/routeflow_data/` seeded with initial defaults, guaranteeing that the application never encounters read-only filesystem errors.
-- For permanent cross-session storage across cold starts on serverless, you can connect an external cloud database (such as Supabase PostgreSQL, Firebase, or MongoDB Atlas) by swapping the helper methods in `storage.py`.
-
----
-
-## Alternative Deployments (Render / Railway / Docker)
-
-If you require persistent file storage without setting up an external database, standard container platforms are fully supported out-of-the-box via the included `Procfile`:
-
-### Deploy to Render
-1. Create a **New Web Service** on [render.com](https://render.com/).
-2. Connect your GitHub repository.
-3. Configure:
-   - **Environment**: Python
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
-4. Render provides persistent disk mounts for permanent local JSON storage.
-
-### Deploy to Railway
-1. Click **"New Project"** on [railway.app](https://railway.app/).
-2. Select **"Deploy from GitHub repo"**.
-3. Railway automatically detects `Procfile` and launches `gunicorn app:app`.
-
----
-
 ## Configuration & Environment Variables
 
 | Variable | Description | Default |
@@ -378,7 +301,6 @@ If you require persistent file storage without setting up an external database, 
 | `SECRET_KEY` | Flask session encryption key | `routeflow_enterprise_secret_key_2026` |
 | `ORS_API_KEY` | OpenRouteService API Key | Built-in fallback token |
 | `PORT` | HTTP port for server binding | `5000` |
-| `NETLIFY` | Auto-set by Netlify environment | Auto-detected |
 
 ---
 
